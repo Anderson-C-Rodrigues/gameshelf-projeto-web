@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameShelf - Perfil & Configurações</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>GameShelf 🎮</h1>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="colecao.html">Coleção</a>
+            <a href="wishlist.html">Wishlist</a>
+            <a href="perfil.html">Perfil</a>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Configurações do Perfil</h2>
+        <form onsubmit="salvarPerfilUsuario(event)">
+            <div>
+                <label style="display:block; margin-bottom:5px;">Seu Nome de Jogador:</label>
+                <input type="text" id="p-nome" style="width:100%;" required>
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:5px;">Tema Visual da Aplicação:</label>
+                <select id="p-tema" style="width:100%;" required>
+                    <option value="escuro">Dark Cyberpunk (Padrão)</option>
+                    <option value="claro">Light Minimalist (Claro)</option>
+                </select>
+            </div>
+            <button type="submit">Salvar Preferências</button>
+        </form>
+    </main>
+
+    <script src="storage.js"></script>
+    <script>
+        function carregarPerfilTela() {
+            const dados = localStorage.getItem(CHAVE_PERFIL);
+            if (dados) {
+                const obj = JSON.parse(dados);
+                document.getElementById('p-nome').value = obj.nome;
+                document.getElementById('p-tema').value = obj.tema;
+            } else {
+                document.getElementById('p-nome').value = "Jogador";
+                document.getElementById('p-tema').value = "escuro";
+            }
+        }
+
+        function salvarPerfilUsuario(event) {
+            event.preventDefault();
+            const perfil = {
+                nome: document.getElementById('p-nome').value,
+                tema: document.getElementById('p-tema').value
+            };
+            localStorage.setItem(CHAVE_PERFIL, JSON.stringify(perfil));
+            
+            // Aplica o tema na hora
+            aplicarTemaGlobal();
+            alert('Perfil atualizado!');
+        }
+
+        window.onload = carregarPerfilTela;
+    </script>
+</body>
+</html>
