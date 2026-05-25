@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameShelf - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>GameShelf 🎮</h1>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="colecao.html">Coleção</a>
+            <a href="wishlist.html">Wishlist</a>
+            <a href="perfil.html">Perfil</a>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Painel Geral</h2>
+        <div class="grid-jogos" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 30px;">
+            <div class="card" style="border-left-color: var(--secondary-color);">
+                <h3>Total de Jogos</h3>
+                <p id="dash-total" style="font-size: 2rem; font-weight: bold; color: var(--secondary-color);">0</p>
+            </div>
+            <div class="card" style="border-left-color: #ffb74d;">
+                <h3>Jogos Zerados</h3>
+                <p id="dash-zerados" style="font-size: 2rem; font-weight: bold; color: #ffb74d;">0</p>
+            </div>
+            <div class="card" style="border-left-color: #64b5f6;">
+                <h3>Na Wishlist</h3>
+                <p id="dash-wishlist" style="font-size: 2rem; font-weight: bold; color: #64b5f6;">0</p>
+            </div>
+            <div class="card" style="border-left-color: #81c784;">
+                <h3>Média de Notas</h3>
+                <p id="dash-media" style="font-size: 2rem; font-weight: bold; color: #81c784;">0.0</p>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 30px;">
+            <h3>Progresso de Avaliações</h3>
+            <div style="background-color: #333; border-radius: 4px; height: 20px; width: 100%; margin-top: 10px; overflow: hidden;">
+                <div id="barra-progresso" style="background-color: var(--primary-color); height: 100%; width: 0%; transition: width 0.5s;"></div>
+            </div>
+            <p id="texto-progresso" style="font-size: 0.9rem; margin-top: 5px; text-align: right;">0% dos jogos avaliados</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <h3>Adicionados Recentemente</h3>
+                <div id="recentes-jogos" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+            <div>
+                <h3>Wishlist Recente</h3>
+                <div id="recentes-wishlist" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="storage.js"></script>
+    <script>
+        function carregarDashboard() {
+            const jogos = carregarDados(CHAVE_JOGOS);
+            const wishlist = carregarDados(CHAVE_WISHLIST);
+
+            document.getElementById('dash-total').innerText = jogos.length;
+            
+            const zerados = jogos.filter(j => j.status === 'zerado').length;
+            document.getElementById('dash-zerados').innerText = zerados;
+            document.getElementById('dash-wishlist').innerText = wishlist.length;
+
+            const jogosComNota = jogos.filter(j => j.nota && j.nota > 0);
+            if (jogosComNota.length > 0) {
+                const soma = jogosComNota.reduce((acc, curr) => acc + parseFloat(curr.nota), 0);
+                const media = (soma / jogosComNota.length).toFixed(1);
+                document.getElementById('dash-media').innerText = media;
+
+                const pct = Math.round((jogosComNota.length / jogos.length) * 100);
+                document.getElementById('barra-progresso').style.width = pct + '%';
+                document.getElementById('texto-progresso').innerText = `${pct}% dos jogos avaliados`;
+            }
+
+            // Render Recentes Jogos
+            const containerJogos = document.getElementById('recentes-jogos');
+            containerJogos.innerHTML = '';
+            const ultimosJogos = jogos.slice(-4).reverse();
+            if(ultimosJogos.length === 0) containerJogos.innerHTML = '<p>Nenhum jogo cadastrado.</p>';
+            ultimosJogos.forEach(j => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.style.padding = '10px 15px';
+                div.innerHTML = `<strong>${j.titulo}</strong><span style="font-size:0.85rem; color:#aaa;">Plataforma: ${j.plataforma} | Nota: ${j.nota || 'N/A'}</span>`;
+                containerJogos.appendChild(div);
+            });
+
+            // Render Recentes Wishlist
+            const containerWish = document.getElementById('recentes-wishlist');
+            containerWish.innerHTML = '';
+            const ultimosWish = wishlist.slice(-3).reverse();
+            if(ultimosWish.length === 0) containerWish.innerHTML = '<p>Sua wishlist está vazia.</p>';
+            ultimosWish.forEach(w => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.style.padding = '10px 15px';
+                div.style.borderLeftColor = '#64b5f6';
+                div.innerHTML = `<strong>${w.titulo}</strong><span style="font-size:0.85rem; color:#aaa;">Prioridade: ${w.prioridade}</span>`;
+                containerWish.appendChild(div);
+            });
+        }
+        window.onload = carregarDashboard;
+    </script>
+</body>
+</html>

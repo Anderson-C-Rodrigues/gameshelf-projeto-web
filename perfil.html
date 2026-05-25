@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameShelf - Perfil</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>GameShelf 🎮</h1>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="colecao.html">Coleção</a>
+            <a href="wishlist.html">Wishlist</a>
+            <a href="perfil.html">Perfil</a>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Preferências do Jogador</h2>
+        <div class="card" style="display:block; margin-bottom:25px;">
+            <div style="margin-bottom:15px;">
+                <label><strong>Nome do Perfil Gamer:</strong></label><br><br>
+                <input type="text" id="p-nome" placeholder="Seu apelido..." style="width:100%; max-width:400px;">
+                <button onclick="salvarPerfil()" style="grid-column:auto; width:auto; margin-left:10px; padding:10px 20px;">Salvar Nome</button>
+            </div>
+            <hr style="border-color:var(--border-color); margin:20px 0;">
+            <div>
+                <label><strong>Tema Visual:</strong></label><br><br>
+                <button onclick="alternarTemaGamer()" style="width:auto; padding:10px 20px;">Alternar Tema Claro / Escuro 🌓</button>
+            </div>
+        </div>
+
+        <h2>Zerar e Reiniciar Sistema</h2>
+        <div class="card" style="border-left-color: #cf6679; display:block;">
+            <p>Atenção: A ação abaixo limpará em definitivo todos os seus dados cadastrados de jogos, reviews e wishlist salvos localmente neste navegador.</p><br>
+            <button onclick="limparTudo()" class="btn-excluir" style="width:auto; padding:12px 25px;">Resetar Banco de Dados Local</button>
+        </div>
+    </main>
+
+    <script src="storage.js"></script>
+    <script>
+        function carregarPaginaPerfil() {
+            const perfil = carregarDados(CHAVE_PERFIL);
+            if(perfil && perfil.nome) {
+                document.getElementById('p-nome').value = perfil.nome;
+            }
+        }
+
+        function salvarPerfil() {
+            const nome = document.getElementById('p-nome').value;
+            const perfil = carregarDados(CHAVE_PERFIL) || {};
+            perfil.nome = nome;
+            salvarDados(CHAVE_PERFIL, perfil);
+            alert("Nome do perfil atualizado!");
+        }
+
+        function alternarTemaGamer() {
+            const corpo = document.body;
+            corpo.classList.toggle('tema-claro');
+            const ehClaro = corpo.classList.contains('tema-claro');
+            salvarDados(CHAVE_TEMA, ehClaro ? 'claro' : 'escuro');
+            aplicarTemaGlobal();
+        }
+
+        function limparTudo() {
+            if(confirm("ATENÇÃO EXTREMA: Você quer mesmo apagar absolutamente TUDO do seu GameShelf?")) {
+                localStorage.clear();
+                alert("Dados limpos. A página será recarregada.");
+                window.location.href = "index.html";
+            }
+        }
+
+        window.onload = carregarPaginaPerfil;
+    </script>
+</body>
+</html>

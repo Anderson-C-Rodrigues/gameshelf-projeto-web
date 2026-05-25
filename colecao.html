@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameShelf - Minha Coleção</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>GameShelf 🎮</h1>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="colecao.html">Coleção</a>
+            <a href="wishlist.html">Wishlist</a>
+            <a href="perfil.html">Perfil</a>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Cadastrar / Editar Jogo</h2>
+        <form id="form-jogo" onsubmit="salvarJogoForm(event)">
+            <input type="hidden" id="j-id">
+            <input type="text" id="j-titulo" placeholder="Título do Jogo" required>
+            <input type="text" id="j-plataforma" placeholder="Plataforma (Ex: PC, PS5, Switch)" required>
+            <input type="text" id="j-genero" placeholder="Gênero">
+            <input type="number" id="j-ano" placeholder="Ano de Lançamento">
+            <input type="text" id="j-desenvolvedora" placeholder="Desenvolvedora">
+            <input type="text" id="j-capa" placeholder="URL da Capa do Jogo">
+            <select id="j-nota">
+                <option value="" disabled selected>Atribuir Nota (1-10)...</option>
+                <option value="10">10 - Obra Prima 👑</option>
+                <option value="9">9 - Excelente</option>
+                <option value="8">8 - Muito Bom</option>
+                <option value="7">7 - Bom</option>
+                <option value="6">6 - Razoável</option>
+                <option value="5">5 - Medíocre</option>
+                <option value="4">4 - Ruim</option>
+                <option value="3">3 - Muito Ruim</option>
+                <option value="2">2 - Terrível</option>
+                <option value="1">1 - Injogável 🤮</option>
+            </select>
+            <select id="j-status" required>
+                <option value="" disabled selected>Status de Jogo...</option>
+                <option value="jogando">Jogando 🕹️</option>
+                <option value="zerado">Zerado ✅</option>
+                <option value="pausado">Pausado ⏸️</option>
+                <option value="abandonado">Abandonado ❌</option>
+            </select>
+            <button type="submit" id="btn-submit-jogo">Salvar na Coleção</button>
+        </form>
+
+        <div class="header-secao">
+            <h2>Meus Jogos</h2>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="busca-jogo" placeholder="Buscar por título..." oninput="filtrarColecao()" style="padding:8px;">
+                <select id="filtro-status" onchange="filtrarColecao()" style="padding:8px;">
+                    <option value="todos">Todos os Status</option>
+                    <option value="jogando">Jogando</option>
+                    <option value="zerado">Zerado</option>
+                    <option value="pausado">Pausado</option>
+                    <option value="abandonado">Abandonado</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="grid-jogos" id="container-jogos"></div>
+    </main>
+
+    <script src="storage.js"></script>
+    <script>
+        function salvarJogoForm(event) {
+            event.preventDefault();
+            const id = document.getElementById('j-id').value;
+            const jogo = {
+                id: id ? id : generarId(),
+                titulo: document.getElementById('j-titulo').value,
+                plataforma: document.getElementById('j-plataforma').value,
+                genero: document.getElementById('j-genero').value,
+                ano: document.getElementById('j-ano').value,
+                desenvolvedora: document.getElementById('j-desenvolvedora').value,
+                capaUrl: document.getElementById('j-capa').value || 'https://via.placeholder.com/150',
+                nota: document.getElementById('j-nota').value,
+                status: document.getElementById('j-status').value
+            };
+
+            let lista = carregarDados(CHAVE_JOGOS);
+            if (id) {
+                lista = lista.map(item => item.id === id ? jogo : item);
+            } else {
+                lista.push(jogo);
+            }
+            salvarDados(CHAVE_JOGOS, lista);
+            
+            document.getElementById('form-jogo').reset();
+            document.getElementById('j-id').value = '';
+            document.getElementById('btn-submit-jogo').innerText = 'Salvar na Coleção';
+            renderizarColecao();
+        }
+
+        function deletarJogo(id) {
+            if(confirm("Tem certeza que deseja remover este jogo da sua coleção?")) {
+                let lista = carregarDados(CHAVE_JOGOS);
+                lista = lista.filter(item => item.id !== id);
+                salvarDados(CHAVE_JOGOS, lista);
+                renderizarColecao();
+            }
+        }
+
+        function editarJogo(id) {
+            const lista = carregarDados(CHAVE_JOGOS);
+            const jogo = lista.find(item => item.id === id);
+            if(jogo) {
+                document.getElementById('j-id').value = jogo.id;
+                document.getElementById('j-titulo').value = jogo.titulo;
+                document.getElementById('j-plataforma').value = jogo.plataforma;
+                document.getElementById('j-genero').value = jogo.genero || '';
+                document.getElementById('j-ano').value = jogo.ano || '';
+                document.getElementById('j-desenvolvedora').value = jogo.desenvolvedora || '';
+                document.getElementById('j-capa').value = jogo.capaUrl === 'https://via.placeholder.com/150' ? '' : jogo.capaUrl;
+                document.getElementById('j-nota').value = jogo.nota || '';
+                document.getElementById('j-status').value = jogo.status;
+                document.getElementById('btn-submit-jogo').innerText = 'Atualizar Jogo';
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            }
+        }
+
+        function renderizarColecao(listaFiltrada = null) {
+            const container = document.getElementById('container-jogos');
+            container.innerHTML = '';
+            const lista = listaFiltrada || carregarDados(CHAVE_JOGOS);
+
+            if(lista.length === 0) {
+                container.innerHTML = '<p>Nenhum jogo encontrado.</p>';
+                return;
+            }
+
+            lista.forEach(j => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h3>${j.titulo}</h3>
+                    <p><strong>Plataforma:</strong> ${j.plataforma}</p>
+                    <p><strong>Gênero:</strong> ${j.genero || 'Não informado'}</p>
+                    <p><strong>Nota:</strong> ${j.nota ? j.nota + '/10' : 'Sem nota'}</p>
+                    <p><strong>Status:</strong> <span style="text-transform: capitalize;">${j.status}</span></p>
+                    <div class="acoes-card">
+                        <a href="detalhes.html?id=${j.id}" class="btn-detalhes">Reviews</a>
+                        <button onclick="editarJogo('${j.id}')" style="background-color: var(--primary-color);">Editar</button>
+                        <button onclick="deletarJogo('${j.id}')" class="btn-excluir">Excluir</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filtrarColecao() {
+            const busca = document.getElementById('busca-jogo').value.toLowerCase();
+            const status = document.getElementById('filtro-status').value;
+            let lista = carregarDados(CHAVE_JOGOS);
+
+            if(status !== 'todos') {
+                lista = lista.filter(j => j.status === status);
+            }
+            if(busca) {
+                lista = lista.filter(j => j.titulo.toLowerCase().includes(busca));
+            }
+            renderizarColecao(lista);
+        }
+
+        window.onload = function() { renderizarColecao(); };
+    </script>
+</body>
+</html>

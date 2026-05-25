@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameShelf - Detalhes e Review</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>GameShelf 🎮</h1>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="colecao.html">Coleção</a>
+            <a href="wishlist.html">Wishlist</a>
+            <a href="perfil.html">Perfil</a>
+        </nav>
+    </header>
+
+    <main id="conteudo-detalhes">
+        <a href="colecao.html" style="color: var(--secondary-color); text-decoration: none; font-weight: bold;"><- Voltar para Coleção</a>
+        <br><br>
+        <div class="card" id="card-info-jogo" style="margin-bottom: 25px;">
+            <!-- Preenchido via JS -->
+        </div>
+
+        <h2>Diário Gamer & Review Pessoal</h2>
+        <div class="card" style="display: block;">
+            <form id="form-review" onsubmit="salvarReviewForm(event)">
+                <textarea id="texto-review" placeholder="Escreva suas impressões, análises da história, jogabilidade, bugs, momentos marcantes..." style="width:100%; min-height:200px;" required></textarea>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:15px; width:100%;">
+                    <input type="number" id="horas-jogadas" placeholder="Horas Jogadas">
+                    <input type="text" id="data-conclusao" placeholder="Data de Conclusão">
+                </div>
+                <button type="submit" style="margin-top:15px;">Salvar Diário de Bordo</button>
+            </form>
+        </div>
+    </main>
+
+    <script src="storage.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const jogoId = urlParams.get('id');
+
+        function carregarDetalhes() {
+            if(!jogoId) {
+                document.getElementById('conteudo-detalhes').innerHTML = '<p>Jogo não selecionado.</p>';
+                return;
+            }
+
+            const jogos = carregarDados(CHAVE_JOGOS);
+            const jogo = jogos.find(j => j.id === jogoId);
+
+            if(!jogo) {
+                document.getElementById('conteudo-detalhes').innerHTML = '<p>Jogo não encontrado na coleção.</p>';
+                return;
+            }
+
+            document.getElementById('card-info-jogo').innerHTML = `
+                <h2>${jogo.titulo}</h2>
+                <p><strong>Plataforma:</strong> ${jogo.plataforma}</p>
+                <p><strong>Gênero:</strong> ${jogo.genero || 'Não informado'} | <strong>Ano:</strong> ${jogo.ano || 'Não informado'}</p>
+                <p><strong>Desenvolvedora:</strong> ${jogo.desenvolvedora || 'Não informada'}</p>
+                <p><strong>Nota Pessoal:</strong> <span style="color:var(--secondary-color); font-weight:bold;">${jogo.nota ? jogo.nota + '/10' : 'Não avaliado'}</span></p>
+                <p><strong>Status Atual:</strong> ${jogo.status.toUpperCase()}</p>
+            `;
+
+            // Carrega Review se houver
+            const reviews = carregarDados(CHAVE_REVIEWS);
+            const reviewExistente = reviews.find(r => r.jogoId === jogoId);
+            if(reviewExistente) {
+                document.getElementById('texto-review').value = reviewExistente.texto || '';
+                document.getElementById('horas-jogadas').value = reviewExistente.horasJogadas || '';
+                document.getElementById('data-conclusao').value = reviewExistente.dataConclusao || '';
+            }
+        }
+
+        function salvarReviewForm(event) {
+            event.preventDefault();
+            const texto = document.getElementById('texto-review').value;
+            const horas = document.getElementById('horas-jogadas').value;
+            const dataC = document.getElementById('data-conclusao').value;
+
+            let reviews = carregarDados(CHAVE_REVIEWS);
+            const index = reviews.findIndex(r => r.jogoId === jogoId);
+
+            const objetoReview = {
+                jogoId: jogoId,
+                texto: texto,
+                horasJogadas: horas,
+                dataConclusao: dataC,
+                ultimaEdicao: new Date().toLocaleDateString()
+            };
+
+            if(index > -1) {
+                reviews[index] = objetoReview;
+            } else {
+                reviews.push(objetoReview);
+            }
+
+            salvarDados(CHAVE_REVIEWS, reviews);
+            alert("Sua análise e diário foram salvos com sucesso!");
+        }
+
+        window.onload = carregarDetalhes;
+    </script>
+</body>
+</html>
